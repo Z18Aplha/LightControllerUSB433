@@ -5,7 +5,7 @@ RCSwitch mySwitch = RCSwitch();
 
 const unsigned int light = 3; //PWM Pin
 int prev_bri = 100;
-int prev_msg = 0;
+unsigned long prev_msg = 0;
 
 void fade_in(int start, int stopv);
 void fade_out(int start, int stopv);
@@ -28,8 +28,8 @@ void loop() {
 
     if (mySwitch.available()) {
 
-    int msg = mySwitch.getReceivedValue();
-    int code = msg - 23000;
+    unsigned long msg = mySwitch.getReceivedValue();
+    unsigned long code = msg - 23000;
     int rec_bri = 0;
 
     Serial.println("");
