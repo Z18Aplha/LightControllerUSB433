@@ -4,8 +4,9 @@
 RCSwitch mySwitch = RCSwitch();
 
 const unsigned int light = 3; //PWM Pin
-int prev_bri = 100;
-unsigned long prev_msg = 0;
+unsigned rec_bri = 0;
+unsigned prev_brightness = 0;
+unsigned long timestamp = 0;
 
 void fade_in(int start, int stopv);
 void fade_out(int start, int stopv);
@@ -22,66 +23,32 @@ void setup() {
 }
 
 void loop() {
-    int value = 0;
-    //int pwm = 0;
-
-
     if (mySwitch.available()) {
 
-    unsigned long msg = mySwitch.getReceivedValue();
-    unsigned long code = msg - 23000;
-    int rec_bri = 0;
+      unsigned long msg = mySwitch.getReceivedValue();
+      unsigned long brightness = msg - 23000;
 
-    Serial.println("");
-    Serial.print("message received: ");
-    Serial.println(msg);
-    Serial.print("extracted code: ");
-    Serial.println(code);
+      Serial.println("");
+      Serial.print("message received: ");
+      Serial.println(msg);
+      Serial.print("extracted brightness: ");
+      Serial.println(brightness);
 
-  if (!(msg == prev_msg) && (msg > 23000) && !(code == 40)){  //40 indicates issues (dont know why), need to be filtered! transformation in transmitter!
-    if ((code <= 100) && (code > 0)){
-      rec_bri = prev_bri;
-      prev_bri = code;
-      value = code;
-    }
-    else if (code == 0){
-      value = code;
-      prev_bri = 100;
-    }
-    else if (code == 600){
-      value = prev_bri;
-      fade_in(0, value);
-    }
-    else if (code == 500){
-      value = 0;
-      fade_out(prev_bri, 0);
-    }
-
-
-    if((code >= 0) && (code <= 100)){
-      //pwm = map(value, 0, 100, 0, 255);
-      //analogWrite(light, pwm);
-
-
-      if (value > rec_bri){
-        fade_in(rec_bri, value);
+      if ((!(brightness == prev_brightness) || (millis() - timestamp > 1000)) && (brightness >= 0) && (brightness <= 100) && !(brightness == 40)){  //40 indicates issues (dont know why), need to be filtered! transformation in transmitter!
+        timestamp = millis();
+        if (brightness > rec_bri){
+          fade_in(rec_bri, brightness);
+        }
+        else{
+          fade_out(rec_bri, brightness);
+        }
+          prev_brightness = brightness;
+          rec_bri = brightness;
       }
       else{
-        fade_out(rec_bri, value);
+        Serial.println("received multiple times, wrong format or '40'");
       }
-
-
-
     }
-      prev_msg = msg;
-      delay(100);
-   }
-   else{
-    Serial.println("received multiple times, wrong format or '40'");
-   }
-
-  }
-
 
     mySwitch.resetAvailable();
 
